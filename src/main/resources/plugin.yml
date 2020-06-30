@@ -1,0 +1,12 @@
+name: KalTag
+version: ${project.version}
+main: net.cubekrowd.kaltag.KalTag
+api-version: 1.15
+authors: [JohnStar128]
+description: A fun game of tag
+website: https://cubekrowd.net
+
+commands:
+  kaltag:
+    description: Control a game of KalTag
+    usage: /<command>
