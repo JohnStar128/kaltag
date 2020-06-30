@@ -16,6 +16,6 @@ If the count is higher than two, it will select another player right away.
 
 # Commands and Permissions
 
-| Command | Permission |
-----------|-------------
-| /kaltag | kaltag.toggle|
+| Command | Permission | Info |
+----------|------------| -----|
+| /kaltag | kaltag.toggle| Toggles the game state
