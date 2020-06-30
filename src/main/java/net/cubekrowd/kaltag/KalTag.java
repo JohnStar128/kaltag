@@ -98,6 +98,8 @@ public final class KalTag extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent e) {
+        // Remove the player from the onlinePlayers HashMap, clear the current tagged player,
+        // and call the initializing method to tag a new player
         onlinePlayers.remove(e.getPlayer());
         if (gameState.get(game).equals(true)) {
             Player leftPlayer = e.getPlayer();
@@ -114,6 +116,8 @@ public final class KalTag extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onRightClickPlayer(PlayerInteractAtEntityEvent e) {
+        // If the tagged player right clicks a non-tagged player who wasn't the previous
+        // tagged player, make them the new tagged player
         if (gameState.get(game).equals(true) && e.getHand().equals(EquipmentSlot.HAND)) {
             Player currentlyTagged = e.getPlayer();
             if (tagged.get(prevTag) == e.getRightClicked()) {
