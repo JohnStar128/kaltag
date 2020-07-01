@@ -91,9 +91,15 @@ public final class KalTag extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
         // Add new players to onlinePlayers ArrayList
-        onlinePlayers.add(e.getPlayer());
+        Player playerJoined = e.getPlayer();
+        onlinePlayers.add(playerJoined);
+        // Tell new players who is currently tagged
+        if (tagged.get(tag) != playerJoined) {
+            playerJoined.sendMessage(KT_PREFIX + ChatColor.GOLD + tagged.get(tag).getName() + ChatColor.RED + " is it!");
+        }
+
         // Unset glowing for people who come back while game isn't running
-        if (gameState() && e.getPlayer().isGlowing()) {
+        if (gameState() && playerJoined.isGlowing()) {
             e.getPlayer().setGlowing(false);
         }
         // If less than 2 players are online but game state is true, don't initialize game
@@ -130,6 +136,7 @@ public final class KalTag extends JavaPlugin implements Listener {
             var tagDelay = getConfig().getInt("tag-cooldown") * 20;
             if (tagged.get(prevTag) == e.getRightClicked()) {
                 currentlyTagged.sendMessage(KT_PREFIX + ChatColor.RED + "You can't tag this player yet!");
+                return;
             }
             if (e.getRightClicked() instanceof Player && e.getRightClicked() != tagged.get(prevTag) && e.getRightClicked() != tagged.get(tag)) {
                 Player notTagged = (Player) e.getRightClicked();
@@ -157,13 +164,13 @@ public final class KalTag extends JavaPlugin implements Listener {
             return true;
         }
 
-        if (gameState()) {
-            stopGame();
-        } else {
+        if (!gameState()) {
             Bukkit.broadcastMessage(KT_PREFIX + ChatColor.GOLD + "KalTag has begun!");
             initializeGame();
             tagged.put(prevTag, tagged.get(tag));
             gameState = true;
+        } else {
+            stopGame();
         }
         return true;
     }
