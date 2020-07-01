@@ -1,7 +1,7 @@
 name: KalTag
 version: ${project.version}
 main: net.cubekrowd.kaltag.KalTag
-api-version: 1.15
+api-version: 1.16
 authors: [JohnStar128]
 description: A fun game of tag
 website: https://cubekrowd.net

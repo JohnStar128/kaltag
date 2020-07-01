@@ -20,15 +20,14 @@ import java.util.Random;
 
 public final class KalTag extends JavaPlugin implements Listener {
 
-    String game = "game";
+    boolean gameState;
     String tag = "tagged";
     String quit = "quit";
     String prevTag = "previouslyTagged";
-    Map<String, Boolean> gameState = new HashMap<String, Boolean>();
     Map<String, Player> tagged = new HashMap<String, Player>();
-    public ArrayList<Player> onlinePlayers = new ArrayList<Player>();
-    public static Random random = new Random();
-    public static String KT_PREFIX = ChatColor.DARK_GRAY + "[" + ChatColor.DARK_PURPLE + "Kal" + ChatColor.GOLD + "Tag" + ChatColor.DARK_GRAY + "] ";
+    ArrayList<Player> onlinePlayers = new ArrayList<Player>();
+    static Random random = new Random();
+    static String KT_PREFIX = ChatColor.DARK_GRAY + "[" + ChatColor.DARK_PURPLE + "Kal" + ChatColor.GOLD + "Tag" + ChatColor.DARK_GRAY + "] ";
 
 
     @Override
@@ -38,7 +37,7 @@ public final class KalTag extends JavaPlugin implements Listener {
         // Add the tagged field to the tagged HashMap
         tagged.put(tag, null);
         // Set game state to false, to be turned on via command
-        gameState.put(game, false);
+        gameState = false;
         // Add all currently online players to onlinePlayers ArrayList
         onlinePlayers.addAll(Bukkit.getOnlinePlayers());
     }
@@ -46,14 +45,19 @@ public final class KalTag extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         // Check if game is currently running, if so, turn off
-        if (gameState.get(game).equals(true)) {
+        if (gameState()) {
             stopGame();
         }
+    }
+
+    public boolean gameState() {
+        return gameState;
     }
 
     public void initializeGame() {
         // Grab a random online player to tag, put them in the tagged HashMap
         // and make them glow
+        Bukkit.broadcastMessage(ChatColor.DARK_RED + "you shouldn't be seeing this");
         if (onlinePlayers.size() < 2) {
             Bukkit.broadcastMessage(KT_PREFIX + ChatColor.RED + "Not enough players online to tag someone!");
         } else {
@@ -73,12 +77,14 @@ public final class KalTag extends JavaPlugin implements Listener {
             currentlyTagged.setGlowing(false);
             tagged.remove(tag);
             System.out.println(KT_PREFIX + ChatColor.RED + "Removed tagged player.");
-            // prevTag keeps track of the previously tagged player, used in the cooldown
+        }
+        // prevTag keeps track of the previously tagged player, used in the cooldown
+        if (tagged.get(prevTag) != null) {
             tagged.remove(prevTag);
             System.out.println(KT_PREFIX + ChatColor.RED + "Removed previously tagged player.");
-            gameState.put(game, false);
-            Bukkit.broadcastMessage(KT_PREFIX + ChatColor.GOLD + "KalTag is over! Thanks for playing!");
         }
+        gameState = false;
+        Bukkit.broadcastMessage(KT_PREFIX + ChatColor.GOLD + "KalTag is over! Thanks for playing!");
     }
 
     @EventHandler
@@ -86,11 +92,11 @@ public final class KalTag extends JavaPlugin implements Listener {
         // Add new players to onlinePlayers ArrayList
         onlinePlayers.add(e.getPlayer());
         // Unset glowing for people who come back while game isn't running
-        if (gameState.get(game).equals(false) && e.getPlayer().isGlowing()) {
+        if (gameState() && e.getPlayer().isGlowing()) {
             e.getPlayer().setGlowing(false);
         }
         // If less than 2 players are online but game state is true, don't initialize game
-        if (gameState.get(game).equals(true) && Bukkit.getOnlinePlayers().size() == 2 && tagged.get(tag) == null) {
+        if (gameState() && Bukkit.getOnlinePlayers().size() == 2 && tagged.get(tag) == null) {
             Bukkit.broadcastMessage(KT_PREFIX + ChatColor.GOLD + "Enough players online! KalTag can begin!");
             initializeGame();
         }
@@ -100,8 +106,9 @@ public final class KalTag extends JavaPlugin implements Listener {
     public void onPlayerLeave(PlayerQuitEvent e) {
         // Remove the player from the onlinePlayers HashMap, clear the current tagged player,
         // and call the initializing method to tag a new player
+        Bukkit.broadcastMessage("" + ChatColor.RED + gameState);
         onlinePlayers.remove(e.getPlayer());
-        if (gameState.get(game).equals(true)) {
+        if (gameState()) {
             Player leftPlayer = e.getPlayer();
             if (tagged.get(tag) == leftPlayer) {
                 Bukkit.broadcastMessage(KT_PREFIX + ChatColor.GOLD + leftPlayer.getName() + ChatColor.RED + " has logged out! Picking a new player to be it...");
@@ -118,7 +125,7 @@ public final class KalTag extends JavaPlugin implements Listener {
     public void onRightClickPlayer(PlayerInteractAtEntityEvent e) {
         // If the tagged player right clicks a non-tagged player who wasn't the previous
         // tagged player, make them the new tagged player
-        if (gameState.get(game).equals(true) && e.getHand().equals(EquipmentSlot.HAND)) {
+        if (gameState() && e.getHand().equals(EquipmentSlot.HAND)) {
             Player currentlyTagged = e.getPlayer();
             if (tagged.get(prevTag) == e.getRightClicked()) {
                 currentlyTagged.sendMessage(KT_PREFIX + ChatColor.RED + "You can't tag this player yet!");
@@ -149,13 +156,18 @@ public final class KalTag extends JavaPlugin implements Listener {
             return true;
         }
 
-        if (gameState.get(game).equals(false)) {
-            Bukkit.broadcastMessage(KT_PREFIX + ChatColor.GOLD + "KalTag has begun!");
-            initializeGame();
-            tagged.put(prevTag, tagged.get(tag));
-            gameState.put(game, true);
-        } else if (gameState.get(game).equals(true)) {
+        if (gameState()) {
+            Bukkit.broadcastMessage("" + gameState);
+            Bukkit.broadcastMessage(ChatColor.RED + "stopping game");
             stopGame();
+        } else {
+            Bukkit.broadcastMessage(KT_PREFIX + ChatColor.GOLD + "KalTag has begun!");
+            Bukkit.broadcastMessage(ChatColor.YELLOW + "calling initialize game");
+            initializeGame();
+            Bukkit.broadcastMessage(ChatColor.DARK_AQUA + "putting " + prevTag + " into " + tagged);
+            tagged.put(prevTag, tagged.get(tag));
+            gameState = true;
+            Bukkit.broadcastMessage(ChatColor.GREEN + "gameState is now set to " + gameState);
         }
         return true;
     }
