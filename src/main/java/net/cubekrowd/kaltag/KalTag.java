@@ -40,6 +40,8 @@ public final class KalTag extends JavaPlugin implements Listener {
         gameState = false;
         // Add all currently online players to onlinePlayers ArrayList
         onlinePlayers.addAll(Bukkit.getOnlinePlayers());
+        getConfig().options().copyDefaults();
+        saveDefaultConfig();
     }
 
     @Override
@@ -57,7 +59,6 @@ public final class KalTag extends JavaPlugin implements Listener {
     public void initializeGame() {
         // Grab a random online player to tag, put them in the tagged HashMap
         // and make them glow
-        Bukkit.broadcastMessage(ChatColor.DARK_RED + "you shouldn't be seeing this");
         if (onlinePlayers.size() < 2) {
             Bukkit.broadcastMessage(KT_PREFIX + ChatColor.RED + "Not enough players online to tag someone!");
         } else {
@@ -106,7 +107,6 @@ public final class KalTag extends JavaPlugin implements Listener {
     public void onPlayerLeave(PlayerQuitEvent e) {
         // Remove the player from the onlinePlayers HashMap, clear the current tagged player,
         // and call the initializing method to tag a new player
-        Bukkit.broadcastMessage("" + ChatColor.RED + gameState);
         onlinePlayers.remove(e.getPlayer());
         if (gameState()) {
             Player leftPlayer = e.getPlayer();
@@ -127,6 +127,7 @@ public final class KalTag extends JavaPlugin implements Listener {
         // tagged player, make them the new tagged player
         if (gameState() && e.getHand().equals(EquipmentSlot.HAND)) {
             Player currentlyTagged = e.getPlayer();
+            var tagDelay = getConfig().getInt("tag-cooldown") * 20;
             if (tagged.get(prevTag) == e.getRightClicked()) {
                 currentlyTagged.sendMessage(KT_PREFIX + ChatColor.RED + "You can't tag this player yet!");
             }
@@ -138,7 +139,7 @@ public final class KalTag extends JavaPlugin implements Listener {
                 notTagged.setGlowing(true);
                 tagged.put(prevTag, currentlyTagged);
                 Bukkit.broadcastMessage(KT_PREFIX + ChatColor.GOLD + tagged.get(tag).getName() + ChatColor.RED + " is it!");
-                getServer().getScheduler().scheduleSyncDelayedTask(this, () -> tagged.remove(prevTag), 200L);
+                getServer().getScheduler().scheduleSyncDelayedTask(this, () -> tagged.remove(prevTag), tagDelay);
             }
         }
     }
@@ -157,17 +158,12 @@ public final class KalTag extends JavaPlugin implements Listener {
         }
 
         if (gameState()) {
-            Bukkit.broadcastMessage("" + gameState);
-            Bukkit.broadcastMessage(ChatColor.RED + "stopping game");
             stopGame();
         } else {
             Bukkit.broadcastMessage(KT_PREFIX + ChatColor.GOLD + "KalTag has begun!");
-            Bukkit.broadcastMessage(ChatColor.YELLOW + "calling initialize game");
             initializeGame();
-            Bukkit.broadcastMessage(ChatColor.DARK_AQUA + "putting " + prevTag + " into " + tagged);
             tagged.put(prevTag, tagged.get(tag));
             gameState = true;
-            Bukkit.broadcastMessage(ChatColor.GREEN + "gameState is now set to " + gameState);
         }
         return true;
     }

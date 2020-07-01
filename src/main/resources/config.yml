@@ -1,0 +1,2 @@
+#Cooldown beteen when players can tag the previously tagged player. Time is measured in seconds.
+tag-cooldown: 10
